@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Kleenr is a client-side text processing utility — a single-file HTML application (`index.html`) with no build system, no server, and no dependencies beyond CDN-loaded libraries. All text processing happens entirely in the browser; no data is transmitted.
+Kleenr is a client-side text processing utility with no build system, no server, and no dependencies beyond CDN-loaded libraries. All text processing happens entirely in the browser; no data is transmitted.
 
 ## Development
 
-**No build step required.** Open `index.html` directly in a browser or serve it with any static file server:
+**No build step required.** Serve with any static file server (external file references require a server; `file://` won't work):
 
 ```
 python3 -m http.server 8000
@@ -20,11 +20,17 @@ There are no tests, no linter, and no package.json.
 
 ## Architecture
 
-The entire application lives in `index.html` (~1080 lines) using **Scittle** — a browser-based ClojureScript runtime that interprets code at load time, requiring no compilation step.
+The application uses **Scittle** — a browser-based ClojureScript runtime that interprets code at load time, requiring no compilation step.
 
 **Stack**: Scittle 0.8.31 → Reagent (ClojureScript React wrapper) → React 18, all loaded from CDNs.
 
-### Code Structure (inside `<script type="application/x-scittle">`)
+### File Structure
+
+- `index.html` — Shell page with CDN script tags; loads `style.css` and `app.cljs`
+- `style.css` — All styles including CSS custom properties for dark/light theming
+- `app.cljs` — All application logic (Scittle/ClojureScript), loaded via `<script src="app.cljs" type="application/x-scittle">`
+
+### Code Structure (inside `app.cljs`)
 
 1. **State**: Single Reagent atom (`app-state`) holds all mutable state — text content, undo/redo stacks (max 100), selected category, regex fields, status messages, tab width.
 
