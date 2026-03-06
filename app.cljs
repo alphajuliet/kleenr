@@ -275,6 +275,25 @@
        (map #(str/replace % (js/RegExp. "^>\\s?" "") ""))
        (str/join "\n")))
 
+(defn op-remove-bullets [text]
+  (->> (str/split-lines text)
+       (map #(str/replace % (js/RegExp. "^(\\s*)[*\\-+•·◦‣▪▸]\\s*") "$1"))
+       (str/join "\n")))
+
+(defn op-add-bullets [text]
+  (let [w (:tab-width @app-state)]
+    (->> (str/split-lines text)
+         (map (fn [line]
+                (let [m (.match line (js/RegExp. "^(\\s*)(.*)$"))
+                      indent (aget m 1)
+                      content (aget m 2)
+                      tab-indent (loop [s indent prev nil]
+                                   (if (= s prev)
+                                     s
+                                     (recur (str/replace s (js/RegExp. (str " {" w "}")) "\t") s)))]
+                  (str tab-indent "* " content))))
+         (str/join "\n"))))
+
 ;; --- Regex ---
 
 (defn build-flags []
@@ -363,7 +382,9 @@
     {:label "Deduplicate" :fn op-deduplicate-lines}
     {:label "Number Lines" :fn op-number-lines}
     {:label "Add > Prefix" :fn op-add-email-quote}
-    {:label "Remove > Prefix" :fn op-remove-email-quote}]
+    {:label "Remove > Prefix" :fn op-remove-email-quote}
+    {:label "Add Bullets" :fn op-add-bullets}
+    {:label "Remove Bullets" :fn op-remove-bullets}]
    :encoding
    [{:label "HTML → Plain" :fn op-html-to-plain}
     {:label "URL Encode" :fn op-url-encode}
