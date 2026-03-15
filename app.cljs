@@ -118,6 +118,14 @@
         (str/replace (js/RegExp. "\\n" "g") " ")
         (str/replace (js/RegExp. "\\u0000\\u0000" "g") "\n\n"))))
 
+(defn op-join-lines-comma [text]
+  ;; Preserve double newlines (paragraph breaks), join single newlines with ", "
+  (let [fixed (op-fix-linebreaks text)]
+    (-> fixed
+        (str/replace (js/RegExp. "\\n\\n" "g") "\u0000\u0000")
+        (str/replace (js/RegExp. "\\n" "g") ", ")
+        (str/replace (js/RegExp. "\\u0000\\u0000" "g") "\n\n"))))
+
 (defn op-single-to-double-returns [text]
   (str/replace text (js/RegExp. "\\n" "g") "\n\n"))
 
@@ -357,6 +365,7 @@
     {:label "Remove Line Breaks" :fn op-remove-all-linebreaks}
     {:label "Fix Line Breaks" :fn op-fix-linebreaks}
     {:label "Join Paragraphs" :fn op-join-paragraphs}
+    {:label "Join Lines with Comma" :fn op-join-lines-comma}
     {:label "1→2 Returns" :fn op-single-to-double-returns}
     {:label "2→1 Returns" :fn op-double-to-single-returns}]
    :tabs
