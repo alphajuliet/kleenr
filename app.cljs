@@ -267,6 +267,13 @@
 (defn op-reverse-text [text]
   (apply str (reverse text)))
 
+(defn op-base64-encode [text]
+  (js/btoa (js/unescape (js/encodeURIComponent text))))
+
+(defn op-base64-decode [text]
+  (try (js/decodeURIComponent (js/escape (js/atob (str/trim text))))
+       (catch :default e text)))
+
 (defn op-ellipsis-to-periods [text]
   (str/replace text "\u2026" "..."))
 
@@ -401,7 +408,9 @@
     {:label "ROT13" :fn op-rot13}
     {:label "Reverse Text" :fn op-reverse-text}
     {:label "… → ..." :fn op-ellipsis-to-periods}
-    {:label "... → …" :fn op-periods-to-ellipsis}]})
+    {:label "... → …" :fn op-periods-to-ellipsis}
+    {:label "Base64 Encode" :fn op-base64-encode}
+    {:label "Base64 Decode" :fn op-base64-decode}]})
 
 (def category-labels
   {:whitespace "Whitespace"
