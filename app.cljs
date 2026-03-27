@@ -236,6 +236,11 @@
 (defn op-deduplicate-lines [text]
   (->> (str/split-lines text) distinct (str/join "\n")))
 
+(defn op-split-sentences [text]
+  (-> text
+      (str/replace (js/RegExp. "\\.\\s+" "g") ".\n")
+      str/trim))
+
 (defn op-number-lines [text]
   (->> (str/split-lines text)
        (map-indexed (fn [i line] (str (inc i) ". " line)))
@@ -397,6 +402,7 @@
     {:label "Reverse Lines" :fn op-reverse-lines}
     {:label "Deduplicate" :fn op-deduplicate-lines}
     {:label "Number Lines" :fn op-number-lines}
+    {:label "Split Sentences" :fn op-split-sentences}
     {:label "Add > Prefix" :fn op-add-email-quote}
     {:label "Remove > Prefix" :fn op-remove-email-quote}
     {:label "Add Bullets" :fn op-add-bullets}
