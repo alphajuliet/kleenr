@@ -314,6 +314,65 @@
                   (str tab-indent "* " content))))
          (str/join "\n"))))
 
+;; Markdown
+(defn op-strip-markdown [text]
+  (-> text
+      ;; Code blocks (fenced)
+      (str/replace (js/RegExp. "```[\\s\\S]*?```" "g") "")
+      ;; Inline code
+      (str/replace (js/RegExp. "`([^`]+)`" "g") "$1")
+      ;; Images (before links, since ![alt](url))
+      (str/replace (js/RegExp. "!\\[([^\\]]*)\\]\\([^)]*\\)" "g") "$1")
+      ;; Links [text](url)
+      (str/replace (js/RegExp. "\\[([^\\]]*)\\]\\([^)]*\\)" "g") "$1")
+      ;; Headings
+      (str/replace (js/RegExp. "^#{1,6}\\s+" "gm") "")
+      ;; Bold/italic (bold first — require non-whitespace adjacent to delimiters to avoid matching bullets)
+      (str/replace (js/RegExp. "\\*{3}([^\\s*](?:[^*]*?[^\\s*])?)\\*{3}" "g") "$1")
+      (str/replace (js/RegExp. "_{3}([^\\s_](?:[^_]*?[^\\s_])?)_{3}" "g") "$1")
+      (str/replace (js/RegExp. "\\*{2}([^\\s*](?:[^*]*?[^\\s*])?)\\*{2}" "g") "$1")
+      (str/replace (js/RegExp. "_{2}([^\\s_](?:[^_]*?[^\\s_])?)_{2}" "g") "$1")
+      (str/replace (js/RegExp. "\\*([^\\s*](?:[^*]*?[^\\s*])?)\\*" "g") "$1")
+      (str/replace (js/RegExp. "_([^\\s_](?:[^_]*?[^\\s_])?)_" "g") "$1")
+      ;; Strikethrough
+      (str/replace (js/RegExp. "~~([^~]+)~~" "g") "$1")
+      ;; Blockquotes
+      (str/replace (js/RegExp. "^>\\s?" "gm") "")
+      ;; Unordered list markers
+      (str/replace (js/RegExp. "^(\\s*)[*+\\-]\\s+" "gm") "$1")
+      ;; Ordered list markers
+      (str/replace (js/RegExp. "^(\\s*)\\d+\\.\\s+" "gm") "$1")
+      ;; Horizontal rules
+      (str/replace (js/RegExp. "^[-*_]{3,}\\s*$" "gm") "")))
+
+(defn op-strip-bold-italic [text]
+  (-> text
+      (str/replace (js/RegExp. "\\*{3}([^\\s*](?:[^*]*?[^\\s*])?)\\*{3}" "g") "$1")
+      (str/replace (js/RegExp. "_{3}([^\\s_](?:[^_]*?[^\\s_])?)_{3}" "g") "$1")
+      (str/replace (js/RegExp. "\\*{2}([^\\s*](?:[^*]*?[^\\s*])?)\\*{2}" "g") "$1")
+      (str/replace (js/RegExp. "_{2}([^\\s_](?:[^_]*?[^\\s_])?)_{2}" "g") "$1")
+      (str/replace (js/RegExp. "\\*([^\\s*](?:[^*]*?[^\\s*])?)\\*" "g") "$1")
+      (str/replace (js/RegExp. "_([^\\s_](?:[^_]*?[^\\s_])?)_" "g") "$1")))
+
+(defn op-strip-headings [text]
+  (str/replace text (js/RegExp. "^#{1,6}\\s+" "gm") ""))
+
+(defn op-increase-heading-level [text]
+  (->> (str/split-lines text)
+       (map (fn [line]
+              (if (.test (js/RegExp. "^#{1,5}(\\s|$)") line)
+                (str "#" line)
+                line)))
+       (str/join "\n")))
+
+(defn op-decrease-heading-level [text]
+  (->> (str/split-lines text)
+       (map (fn [line]
+              (if (.test (js/RegExp. "^#{2,6}(\\s|$)") line)
+                (subs line 1)
+                line)))
+       (str/join "\n")))
+
 ;; --- Regex ---
 
 (defn build-flags []
@@ -416,7 +475,13 @@
     {:label "… → ..." :fn op-ellipsis-to-periods}
     {:label "... → …" :fn op-periods-to-ellipsis}
     {:label "Base64 Encode" :fn op-base64-encode}
-    {:label "Base64 Decode" :fn op-base64-decode}]})
+    {:label "Base64 Decode" :fn op-base64-decode}]
+   :markdown
+   [{:label "Strip All Markdown" :fn op-strip-markdown}
+    {:label "Strip Bold/Italic" :fn op-strip-bold-italic}
+    {:label "Strip Headings" :fn op-strip-headings}
+    {:label "Increase Heading Level" :fn op-increase-heading-level}
+    {:label "Decrease Heading Level" :fn op-decrease-heading-level}]})
 
 (def category-labels
   {:whitespace "Whitespace"
@@ -425,6 +490,7 @@
    :quotes "Quotes"
    :lines "Lines"
    :encoding "Encoding"
+   :markdown "Markdown"
    :regex "Regex"})
 
 ;; --- Components ---
@@ -541,7 +607,7 @@
 (defn category-tabs-component []
   (let [current (:category @app-state)]
     [:div.category-tabs
-     (for [cat [:whitespace :tabs :case :quotes :lines :encoding :regex]]
+     (for [cat [:whitespace :tabs :case :quotes :lines :encoding :markdown :regex]]
        ^{:key cat}
        [:button.cat-tab
         {:class (when (= cat current) "active")
