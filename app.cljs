@@ -547,6 +547,19 @@
         (.then #(flash! "Copied to clipboard" "success"))
         (.catch #(flash! "Copy failed" "error")))))
 
+(defn clear-icon []
+  [:svg {:xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 24 24"
+         :fill "none" :stroke "currentColor" :stroke-width "2"
+         :stroke-linecap "round" :stroke-linejoin "round"}
+   [:line {:x1 "18" :y1 "6" :x2 "6" :y2 "18"}]
+   [:line {:x1 "6" :y1 "6" :x2 "18" :y2 "18"}]])
+
+(defn clear-text! []
+  (when (not (str/blank? (:text @app-state)))
+    (push-undo!)
+    (swap! app-state assoc :text "")
+    (flash! "Cleared" "success")))
+
 (defn paste-from-clipboard! []
   (-> (js/navigator.clipboard.readText)
       (.then (fn [text]
@@ -565,7 +578,11 @@
     [:button.btn.btn-sm.btn-icon
      {:title "Copy to clipboard"
       :on-click copy-to-clipboard!}
-     [copy-icon]]]
+     [copy-icon]]
+    [:button.btn.btn-sm.btn-icon
+     {:title "Clear text"
+      :on-click clear-text!}
+     [clear-icon]]]
    [:textarea.main-textarea
     {:value (:text @app-state)
      :placeholder "Paste or type your text here..."
