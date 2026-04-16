@@ -357,6 +357,19 @@
 (defn op-strip-headings [text]
   (str/replace text (js/RegExp. "^#{1,6}\\s+" "gm") ""))
 
+(defn op-strip-links [text]
+  (-> text
+      ;; Images ![alt](url) — strip entirely (alt text included)
+      (str/replace (js/RegExp. "!\\[([^\\]]*)\\]\\([^)]*\\)" "g") "")
+      ;; Inline links [text](url) — keep the visible text
+      (str/replace (js/RegExp. "\\[([^\\]]*)\\]\\([^)]*\\)" "g") "$1")
+      ;; Reference links [text][ref] — keep the visible text
+      (str/replace (js/RegExp. "\\[([^\\]]*)\\]\\[[^\\]]*\\]" "g") "$1")
+      ;; Reference definitions on their own line: [ref]: url
+      (str/replace (js/RegExp. "^\\s*\\[[^\\]]+\\]:\\s*\\S+.*$\\n?" "gm") "")
+      ;; Autolinks <http://...>
+      (str/replace (js/RegExp. "<https?://[^>]+>" "g") "")))
+
 (defn op-increase-heading-level [text]
   (->> (str/split-lines text)
        (map (fn [line]
@@ -480,6 +493,7 @@
    [{:label "Strip All Markdown" :fn op-strip-markdown}
     {:label "Strip Bold/Italic" :fn op-strip-bold-italic}
     {:label "Strip Headings" :fn op-strip-headings}
+    {:label "Strip Links" :fn op-strip-links}
     {:label "Increase Heading Level" :fn op-increase-heading-level}
     {:label "Decrease Heading Level" :fn op-decrease-heading-level}]})
 
