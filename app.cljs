@@ -300,6 +300,11 @@
        (map #(str/replace % (js/RegExp. "^(\\s*)[*\\-+•·◦‣▪▸]\\s*") "$1"))
        (str/join "\n")))
 
+(defn op-remove-numbering [text]
+  (->> (str/split-lines text)
+       (map #(str/replace % (js/RegExp. "^(\\s*)(?:\\(?\\d+\\)|\\d+[.)])\\s*") "$1"))
+       (str/join "\n")))
+
 (defn op-add-bullets [text]
   (let [w (:tab-width @app-state)]
     (->> (str/split-lines text)
@@ -478,7 +483,8 @@
     {:label "Add > Prefix" :fn op-add-email-quote}
     {:label "Remove > Prefix" :fn op-remove-email-quote}
     {:label "Add Bullets" :fn op-add-bullets}
-    {:label "Remove Bullets" :fn op-remove-bullets}]
+    {:label "Remove Bullets" :fn op-remove-bullets}
+    {:label "Remove Numbering" :fn op-remove-numbering}]
    :encoding
    [{:label "HTML → Plain" :fn op-html-to-plain}
     {:label "URL Encode" :fn op-url-encode}
